@@ -1,0 +1,18 @@
+{
+  "api_key": "Get it from developers.google.com",
+  "trucks": {
+    "truck1": {
+      "capacity": 400
+    },
+    "truck2": {
+      "capacity": 200
+    },
+    "truck3": {
+      "capacity": 200
+    }
+  },
+  "contact": "123-456-7890 (John Smith)"
+  "output_dir": "output",
+  "origin": [38.950633, -77.397684],
+  "delivery_zone": [20170, 20171, 20190, 20191, 20194, 20195, 20164]
+}
