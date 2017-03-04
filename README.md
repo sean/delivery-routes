@@ -1,4 +1,4 @@
-# Deliver Routes
+# Delivery Routes
 
 This program is used to calculate delivery routes given an origin (the materials depot from which all delivery trucks will leave), the number and types of trucks, and destinations. I wrote this for Herndon, VA's Troop 913 annual mulch fundraiser where we typically must deliver 6,000+ bags of mulch in a single (crazy) day.
 
@@ -49,7 +49,7 @@ The configuration file is a JSON file with the following fields:
       "capacity": 200
     }
   },
-  "contact": "123-456-7890 (John Smith)"
+  "contact": "123-456-7890 (John Smith)",
   "output_dir": "output",
   "origin": [38.950633, -77.397684]
 }
