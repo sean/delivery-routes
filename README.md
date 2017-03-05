@@ -19,13 +19,13 @@ The program requires a CSV as input with all of the addresses along with a confi
 The following command will output a routes.json file which should be used as input to the next stage:
 
 ```shell
-$ ./router.py -c config.json
+$ ./router.py -c config.json <orders.csv>
 ```
 
 The following command will output one PDF file per route, based on the input ```routes.json``` file:
 
 ```shell
-$ ./printer.py -c config.json -r routes.json
+$ ./printer.py -c config.json output/routes.json
 ```
 
 ### Configuration
@@ -35,20 +35,16 @@ The configuration file is a JSON file with the following fields:
 ```json
 {
   "api_key": "Get it from developers.google.com",
-  "trucks": {
-    "truck1": {
-      "name": "Flatbed",
-      "capacity": 400
+  "trucks": [
+    {
+      "type": "Box Truck",
+      "capacity": 135
     },
-    "truck2": {
-      "name": "Box 1",
-      "capacity": 200
-    },
-    "truck3": {
-      "name": "Box 2",
-      "capacity": 200
+    {
+      "type": "26 Foot Flat Truck",
+      "capacity": 315
     }
-  },
+  ],
   "contact": "123-456-7890 (John Smith)",
   "output_dir": "output",
   "origin": [38.950633, -77.397684]
@@ -64,4 +60,6 @@ The fields are explained below:
 
 ## Overview
 
-The algorithm used is extremely simple and doesn't always generate the best road-routes as it simply compares geographic coordinates (lat, lon). This could be improved by using Google's routing API but to do so would require many different route computations which would exceed the free tier of usage, thus I haven't bothered. Instead, to improve the routes, I output an intermediate file, ```routes.json```, which can be hand-edited to improve routes and then passed in to the program to print out the PDF routes.
+The algorithm used is extremely simple and doesn't always generate the best road-routes as it simply compares geographic coordinates (lat, lon). It also assumes that all of the items to deliver are uniform in size/weight (which is true for bags of mulch). Thus the capcity of the trucks and the orders is uniform--more work would be required if you wanted this to calculate delivery of differing items. 
+
+This could be improved by using Google's routing API but to do so would require many different route computations which would exceed the free tier of usage, thus I haven't bothered. Instead, to improve the routes, I output an intermediate file, ```routes.json```, which can be hand-edited to improve routes and then passed in to the program to print out the PDF routes.

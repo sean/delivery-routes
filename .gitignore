@@ -1,3 +1,5 @@
 routes.json
 config.json
+*.csv
 output
+*.pyc

@@ -1,0 +1,6 @@
+webkit2png
+fpdf
+geopy
+googlemaps
+# csv
+# sqlite
