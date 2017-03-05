@@ -47,7 +47,7 @@ if __name__ == '__main__':
   savefile = "{}/deliveries.kml".format(config['output_dir'])
 
   if config['verbose']:
-    print "Loaded {} routes from {}".format(len(orders), args.filename)
+    print "Loaded {} routes from {}".format(len(routes), args.filename)
 
   colors = get_colors(100)
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     for delivery in route:
       pnt = kml.newpoint()
       pnt.name = "{} ({} bags) [route {}]".format(delivery['id'], delivery['count'], num_routes)
-      pnt.description = delivery['address']
+      pnt.description = "route-{}".format(num_routes)
       pnt.coords = [(delivery['lon'], delivery['lat'])]
       pnt.style.iconstyle.color = colors[num_routes]
       pnt.style.iconstyle.icon.href = None
