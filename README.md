@@ -14,7 +14,7 @@ Source your virtual environment and then run ```pip install -r venv_requirements
 
 ## Running
 
-The program requires a CSV as input with all of the addresses along with a configuration file, outlined below. Originally it would output a new CSV file with additional columns but I switched to a sqlite3 database since I kept having to update the data set as more orders came in.
+The program requires a CSV as input with all of the addresses along with a configuration file, outlined below.
 
 The following command will output a routes.json file which should be used as input to the next stage:
 

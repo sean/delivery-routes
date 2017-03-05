@@ -2,5 +2,5 @@ webkit2png
 fpdf
 geopy
 googlemaps
-# csv
-# sqlite
+simplekml
+numpy
