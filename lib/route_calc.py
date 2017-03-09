@@ -16,8 +16,9 @@ class ContainerEncoder(json.JSONEncoder):
 class RouteCalc:
   def __init__(self, config, data):
     self.config = config
-    self.data   = self.validate_data(data)
     self.client = googlemaps.Client(self.config['api_key'])
+    # This must appear last as it uses both config and client
+    self.data   = self.validate_data(data)
 
   def route(self):
     # calculate the adjacencies (between each delivery address) if needed
@@ -51,7 +52,7 @@ class RouteCalc:
     orders = {}
     loaded_orders = self.load_orders()
     for address in data:
-      if len(address['NAME']) > 0:
+      if len(address['NAME']) > 0 and len(address['ADDRESS'].strip()) > 0:
         entry = Container()
         entry.id = address['BD ID']
         entry.name = address['NAME']
@@ -72,6 +73,8 @@ class RouteCalc:
           entry.origin_dist = great_circle((self.config['origin'][0], self.config['origin'][1]), (entry.lat,entry.lon)).miles
     
         orders[entry.id] = entry
+      else:
+        print "ERROR: Bad entry in input: {}".format(address)
 
     self.save_orders(orders)
 
@@ -87,6 +90,7 @@ class RouteCalc:
       print "ERROR: Order {} is {} items, which won't fit on one truck!".format(id, self.data[id].count)
 
     for n in adjacencies[id]:
+      if n[1] > 3: break
       if n[0] in planned_deliveries: continue
       if n[0] in route: continue
       if (count - int(self.data[n[0]].count)) >= 0:
@@ -152,8 +156,9 @@ class RouteCalc:
     orders = {}
     savefile = "{}/orders.json".format(self.config['output_dir'])
 
-    with open(savefile, 'r') as json_data:
-      orders = json.load(json_data)
+    if os.path.isfile(savefile): 
+      with open(savefile, 'r') as json_data:
+        orders = json.load(json_data)
 
     if self.config['verbose']:
       print "Loaded {} orders from {}".format(len(orders), savefile)
@@ -183,5 +188,4 @@ class RouteCalc:
       print "Geocoding {}".format(addr)
 
     geo_result = self.client.geocode(addr)
-    # print geo_result
     return (geo_result[0]['geometry']['location']['lat'], geo_result[0]['geometry']['location']['lng'])

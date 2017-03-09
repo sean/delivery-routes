@@ -54,17 +54,21 @@ if __name__ == '__main__':
   kml = simplekml.Kml(open=1)
 
   num_routes = 0
+  num_orders = 0
   for idx, route in enumerate(routes):
     num_routes = idx + 1
     for delivery in route:
       pnt = kml.newpoint()
-      pnt.name = "{} ({} bags) [route {}]".format(delivery['id'], delivery['count'], num_routes)
+      pnt.name = "{} ({} bags)".format(delivery['id'], delivery['count'])
       pnt.description = "route-{}".format(num_routes)
       pnt.coords = [(delivery['lon'], delivery['lat'])]
       pnt.style.iconstyle.color = colors[num_routes]
       pnt.style.iconstyle.icon.href = None
+      num_orders = num_orders + 1
 
       if config['verbose']:
-        print "Added point for {}".format(delivery['id'])
+        print "Added point for {} (route-{})".format(delivery['id'], num_routes)
 
   kml.save(savefile)
+  if config['verbose']:
+    print "Created {} points, one per order.".format(num_orders)

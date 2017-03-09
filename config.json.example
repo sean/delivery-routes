@@ -12,5 +12,6 @@
   ],
   "contact": "123-456-7890 (John Smith)",
   "output_dir": "output",
+  "processes": 8,
   "origin": [38.950633, -77.397684]
 }
