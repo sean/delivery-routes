@@ -14,12 +14,15 @@ def print_routes(config, routes):
   # Process the routes to generate PDFs for the drivers
   bags       = 0
   deliveries = 0
+  big_truck  = 0
   pool       = Pool(processes=config['processes'])
   args       = [(config, "Route-{}".format(idx+1), d) for idx, d in enumerate(routes)]
   results    = pool.map(generate_pdf, args, 1)
 
   for res in results:
     bags += res[0]
+    if res[0] > 135:
+      big_truck += 1
     deliveries += res[1]
 
   # for a in args:
@@ -28,7 +31,7 @@ def print_routes(config, routes):
   #   deliveries += d
 
   if config['verbose']:
-    print "{} bags delivered to {} addresses.".format(bags, deliveries)
+    print "{} bags delivered to {} addresses ({} big truck routes).".format(bags, deliveries, big_truck)
 
 # private methods
 def generate_pdf(arg):
@@ -45,6 +48,7 @@ def generate_pdf(arg):
   os.system("webkit2png -D %s -o p%s -F -W 1440 -H 900 \"%s\" 1>&2 >/dev/null" % (config['output_dir'], title, url))
   filename = "%s/p%s-full.png" % (config['output_dir'], title)
   pdf = MyFPDF()
+  pdf.set_margins(1, 0.5, 1)
   pdf.add_page()
   pdf.write_html(gen_html(config, title, bags, r, filename))
   pdf.output("%s/%s.pdf" % (config['output_dir'], title),'F')
@@ -85,8 +89,7 @@ def gen_html(config, title, bags, r, img):
   html += """<br /><hr />
   <ul>
     <li><b>Always set the parking brake before loading the vehicle</b></li>
-    <li><b>Highlight each delivery after you've verified that the correct number of bags have been stacked.</li>
-    <li><b>Return this sheet once all deliveries have been highlighted.</li>
+    <li><b>Highlight each delivery after you've verified that the correct number of bags have been stacked.</b></li>
   </ul>
   <br />
   <p><center><b>For Support Call: %s</b></center></p>""" % (config['contact'])
@@ -107,6 +110,7 @@ def url_for_route(route):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Generate PDF delivery routes based on the passed in routes file.')
   parser.add_argument('filename', type=file, help='the JSON file containing the routes to print')
+  parser.add_argument('routeno', type=int, nargs='?', help='the route to print')
   parser.add_argument('-c', '--config', type=file, help='the configuration filename')
   parser.add_argument('-v', '--verbose', action='store_true', help='increase the output verbosity')  
   args = parser.parse_args()
@@ -121,4 +125,10 @@ if __name__ == '__main__':
   with args.filename as json_data:
     r = json.load(json_data)
 
-  print_routes(c, r)
+  if args.routeno != None:
+    if args.routeno > 0 and args.routeno < len(r):
+      generate_pdf([c, "Route-{}".format(args.routeno), r[args.routeno - 1]])
+    else:
+      print "ERROR: Invalid route number (max {})!".format(len(r))
+  else:
+    print_routes(c, r)
