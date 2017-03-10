@@ -59,7 +59,7 @@ if __name__ == '__main__':
     num_routes = idx + 1
     for delivery in route:
       pnt = kml.newpoint()
-      pnt.name = "{} ({} bags)".format(delivery['id'], delivery['count'])
+      pnt.name = "{} {} ({} bags)".format(delivery['id'], delivery['address'], delivery['count'])
       pnt.description = "route-{}".format(num_routes)
       pnt.coords = [(delivery['lon'], delivery['lat'])]
       pnt.style.iconstyle.color = colors[num_routes]

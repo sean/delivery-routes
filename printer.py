@@ -31,7 +31,7 @@ def print_routes(config, routes):
   #   deliveries += d
 
   if config['verbose']:
-    print "{} bags delivered to {} addresses ({} big truck routes).".format(bags, deliveries, big_truck)
+    print "{} bags delivered to {} addresses across {} routes ({} big truck routes).".format(bags, deliveries, len(routes), big_truck)
 
 # private methods
 def generate_pdf(arg):
