@@ -5,7 +5,7 @@ import argparse
 import colorsys
 import numpy
 import json
-import sys
+import csv
 import os
 
 def RGBToHTMLColor(rgb_tuple):
@@ -30,6 +30,22 @@ def load_data(savefile):
     orders = json.load(json_data)
 
   return orders
+
+def save_routes_to_csv(config, routes):
+  savefile = "{}/master.csv".format(config['output_dir'])
+
+  with open(savefile, "wb+") as csvfile:
+    f = csv.writer(csvfile)
+
+    # Write CSV Header, If you dont need that, remove this line
+    f.writerow(["ID", "Name", "Address", "Bags", "Route", "Coments"])
+
+    for idx, route in enumerate(routes):
+      for d in route:
+        f.writerow([d['id'], d['name'], d['address'], d['count'], "route-{}".format(idx+1), d['comments']])
+
+  if config['verbose']:
+    print "Saved {} routes to {}".format(len(routes), savefile)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Generate a KML file based on the passed in routes.json file.')
@@ -72,3 +88,5 @@ if __name__ == '__main__':
   kml.save(savefile)
   if config['verbose']:
     print "Created {} points, one per order.".format(num_orders)
+
+  save_routes_to_csv(config, routes)

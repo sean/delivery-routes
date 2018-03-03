@@ -5,3 +5,4 @@ output
 *.pyc
 *.xlsx
 *.kml
+.DS_Store
