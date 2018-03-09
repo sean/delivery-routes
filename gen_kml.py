@@ -4,7 +4,7 @@ import simplekml
 import argparse
 import colorsys
 import numpy
-import json
+import simplejson
 import csv
 import os
 
@@ -27,7 +27,11 @@ def load_data(savefile):
   orders = {}
 
   with open(savefile, 'r') as json_data:
-    orders = json.load(json_data)
+    try:
+      orders = simplejson.load(json_data)
+    except ValueError as e:
+      print('invalid json: %s' % e)
+      raise
 
   return orders
 
@@ -56,7 +60,7 @@ if __name__ == '__main__':
 
   config = None
   with args.config as json_data:
-    config = json.load(json_data)
+    config = simplejson.load(json_data)
   config['verbose'] = args.verbose
 
   routes = load_data(args.filename)

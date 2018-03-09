@@ -74,7 +74,7 @@ class RouteCalc:
     
         orders[entry.id] = entry
       else:
-        print "ERROR: Bad entry in input: {}".format(address)
+        print "ERROR: Bad entry in input: {}".format(address['BD ID'])
 
     self.save_orders(orders)
 

@@ -6,6 +6,7 @@ import argparse
 import urllib
 import json
 import time
+import csv
 import os
 
 from lib.mypdf import MyFPDF
@@ -32,6 +33,44 @@ def print_routes(config, routes):
 
   if config['verbose']:
     print "{} bags delivered to {} addresses across {} routes ({} big truck routes).".format(bags, deliveries, len(routes), big_truck)
+
+def generate_orders_csv(config, routes):
+  """Generate a CSV with the following columsn: Order ID, Route, Name, Address, Bag Count, Comments"""
+  savefile = "{}/orders.csv".format(config['output_dir'])
+
+  with open(savefile, "wb+") as csvfile:
+    f = csv.writer(csvfile)
+
+    # Write CSV Header, If you dont need that, remove this line
+    f.writerow(["ID", "Route", "Name", "Address", "Bag Count", "Comments"])
+
+    for idx, route in enumerate(routes):
+      for d in route:
+        f.writerow([d['id'], "route-{}".format(idx+1), d['name'], d['address'], d['count'], d['comments']])
+
+  if config['verbose']:
+    print "Saved {} routes to {}".format(len(routes), savefile)  
+
+def generate_routes_csv(config, routes):
+  """Generate a CSV with the following columns: Route, Order ID, Driver, Time Out, Time In, Duration"""
+  savefile = "{}/routes.csv".format(config['output_dir'])
+
+  with open(savefile, "wb+") as csvfile:
+    f = csv.writer(csvfile)
+
+    # Write CSV Header, If you dont need that, remove this line
+    f.writerow(["Route", "Bag Count", "Deliveries", "Driver", "Time Out", "Time In", "Duration"])
+
+    for idx, route in enumerate(routes):
+      counter = 0
+      deliveries = []
+      for d in route:
+        counter += int(d['count'])
+        deliveries.append(d['id'])
+      f.writerow(["route-{}".format(idx+1), counter, ";".join(deliveries), "", "", "", ""])
+
+  if config['verbose']:
+    print "Saved {} routes to {}".format(len(routes), savefile)
 
 # private methods
 def generate_pdf(arg):
@@ -132,3 +171,7 @@ if __name__ == '__main__':
       print "ERROR: Invalid route number (max {})!".format(len(r))
   else:
     print_routes(c, r)
+
+  # Generate the master route list and order list for tracking progress
+  generate_orders_csv(c, r)
+  generate_routes_csv(c, r)

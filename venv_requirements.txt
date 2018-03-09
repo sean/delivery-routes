@@ -3,4 +3,5 @@ fpdf
 geopy
 googlemaps
 simplekml
+simplejson
 numpy
