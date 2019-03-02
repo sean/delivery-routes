@@ -5,3 +5,4 @@ googlemaps
 simplekml
 simplejson
 numpy
+smartystreets_python_sdk

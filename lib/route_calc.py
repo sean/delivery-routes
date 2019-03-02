@@ -2,7 +2,9 @@ from geopy.distance import great_circle
 from collections import OrderedDict
 from operator import itemgetter
 
+import smartystreets_python_sdk
 import googlemaps
+
 import os.path
 import json
 
@@ -15,8 +17,16 @@ class ContainerEncoder(json.JSONEncoder):
 
 class RouteCalc:
   def __init__(self, config, data):
-    self.config = config
-    self.client = googlemaps.Client(self.config['api_key'])
+    self.cfg = config
+    if self.cfg.google_api_key:
+      self.google_client = googlemaps.Client(self.cfg.google_api_key)
+    else:
+      self.google_client = None
+    if self.cfg.smarty_auth_id:
+      credentials = smartystreets_python_sdk.StaticCredentials(self.cfg.smarty_auth_id, self.cfg.smarty_auth_token)
+      self.smarty_client = smartystreets_python_sdk.ClientBuilder(credentials).build_us_street_api_client()
+    else:
+      self.smarty_client = None
     # This must appear last as it uses both config and client
     self.data   = self.validate_data(data)
 
@@ -52,16 +62,19 @@ class RouteCalc:
     orders = {}
     loaded_orders = self.load_orders()
     for address in data:
-      if len(address['NAME']) > 0 and len(address['ADDRESS'].strip()) > 0:
+      if len(address[self.cfg.map_key('NAME')]) > 0 and len(address[self.cfg.map_key('ADDRESS')].strip()) > 0:
         entry = Container()
-        entry.id = address['BD ID']
-        entry.name = address['NAME']
-        entry.address = "{}, {}, VA {}".format(address['ADDRESS'].strip(), address['TOWN'].strip(), address['ZIP'].strip())
-        entry.count = address['BAGS']
-        entry.comments = address['COMMENTS']
+        entry.id = address[self.cfg.map_key('BD ID')]
+        entry.name = address[self.cfg.map_key('NAME')]
+        entry.address = "{}, {}, {} {}".format(address[self.cfg.map_key('ADDRESS')].strip(), 
+                                               address[self.cfg.map_key('TOWN')].strip(), 
+                                               address[self.cfg.map_key('STATE')].strip(), 
+                                               address[self.cfg.map_key('ZIP')].strip())
+        entry.count = address[self.cfg.map_key('BAGS')]
+        entry.comments = address[self.cfg.map_key('COMMENTS')]
 
         if entry.count == 0:
-          print "ERROR: Order {} contains 0 items!".format(entry.id)
+          print("ERROR: Order {} contains 0 items!".format(entry.id))
     
         # avoid expensive calculations by reusing the data from the loaded orders
         if entry.id in loaded_orders:
@@ -69,12 +82,15 @@ class RouteCalc:
           entry.lon = loaded_orders[entry.id]['lon']
           entry.origin_dist = loaded_orders[entry.id]['origin_dist']
         else:
-          (entry.lat, entry.lon) = self.geocode(entry.address)
-          entry.origin_dist = great_circle((self.config['origin'][0], self.config['origin'][1]), (entry.lat,entry.lon)).miles
+          (entry.lat, entry.lon) = self.geocode(address[self.cfg.map_key('ADDRESS')].strip(), 
+                                                address[self.cfg.map_key('TOWN')].strip(), 
+                                                address[self.cfg.map_key('STATE')].strip(), 
+                                                address[self.cfg.map_key('ZIP')].strip())
+          entry.origin_dist = great_circle((self.cfg.origin[0], self.cfg.origin[1]), (entry.lat,entry.lon)).miles
     
         orders[entry.id] = entry
       else:
-        print "ERROR: Bad entry in input: {}".format(address['BD ID'])
+        print("ERROR: Bad entry in input: {}".format(address[self.cfg.map_key('BD ID')]))
 
     self.save_orders(orders)
 
@@ -87,7 +103,7 @@ class RouteCalc:
     count = 135 - int(self.data[id].count)
 
     if count < 0:
-      print "ERROR: Order {} is {} items, which won't fit on one truck!".format(id, self.data[id].count)
+      print("ERROR: Order {} is {} items, which won't fit on one truck!".format(id, self.data[id].count))
 
     for n in adjacencies[id]:
       if n[1] > 3: break
@@ -111,14 +127,14 @@ class RouteCalc:
     return expanded_routes
 
   def calculate_adjacencies(self):
-    if self.config['verbose']:
-      print "Calculating adjacencies"
+    if self.cfg.verbose:
+      print("Calculating adjacencies")
     adjacencies = {}
 
-    for k,v in self.data.iteritems():
+    for k,v in self.data.items():
       if not k in adjacencies:
         adjacencies[k] = {}
-      for l,w in self.data.iteritems():
+      for l,w in self.data.items():
         if l == k: continue
         adjacencies[k][l] = great_circle((v.lat, v.lon), (w.lat, w.lon)).miles
 
@@ -132,60 +148,85 @@ class RouteCalc:
 
   def load_adjacencies(self):
     adjacencies = {}
-    savefile = "{}/adjacencies.json".format(self.config['output_dir'])
+    savefile = "{}/adjacencies.json".format(self.cfg.output_dir)
 
     if os.path.isfile(savefile): 
       with open(savefile, 'r') as json_data:
         adjacencies = json.load(json_data)
 
-    if self.config['verbose']:
-      print "Loaded {} adjacencies from {}".format(len(adjacencies), savefile)
+    if self.cfg.verbose:
+      print("Loaded {} adjacencies from {}".format(len(adjacencies), savefile))
 
     return adjacencies
 
   def save_adjacencies(self, data):
-    savefile = "{}/adjacencies.json".format(self.config['output_dir'])
+    savefile = "{}/adjacencies.json".format(self.cfg.output_dir)
 
     with open(savefile, 'w') as f:
       json.dump(data, f, indent=2, cls=ContainerEncoder)
 
-    if self.config['verbose']:
-      print "Saved {} adjacencies to {}".format(len(data), savefile)    
+    if self.cfg.verbose:
+      print("Saved {} adjacencies to {}".format(len(data), savefile))
 
   def load_orders(self):
     orders = {}
-    savefile = "{}/orders.json".format(self.config['output_dir'])
+    savefile = "{}/orders.json".format(self.cfg.output_dir)
 
     if os.path.isfile(savefile): 
       with open(savefile, 'r') as json_data:
         orders = json.load(json_data)
 
-    if self.config['verbose']:
-      print "Loaded {} orders from {}".format(len(orders), savefile)
+    if self.cfg.verbose:
+      print("Loaded {} orders from {}".format(len(orders), savefile))
 
     return orders
 
   def save_orders(self, data):
-    savefile = "{}/orders.json".format(self.config['output_dir'])
+    savefile = "{}/orders.json".format(self.cfg.output_dir)
+
+    if not os.path.exists(self.cfg.output_dir):
+      os.makedirs(self.cfg.output_dir)
 
     with open(savefile, 'w') as f:
       json.dump(data, f, indent=2, cls=ContainerEncoder)
 
-    if self.config['verbose']:
-      print "Saved {} orders to {}".format(len(data), savefile)
+    if self.cfg.verbose:
+      print("Saved {} orders to {}".format(len(data), savefile))
 
   def save_routes(self, routes):
-    savefile = "{}/routes.json".format(self.config['output_dir'])
+    savefile = "{}/routes.json".format(self.cfg.output_dir)
 
     with open(savefile, 'w') as f:
       json.dump(routes, f, indent=2, cls=ContainerEncoder)
 
-    if self.config['verbose']:
-      print "Saved {} routes to {}".format(len(routes), savefile)
+    if self.cfg.verbose:
+      print("Saved {} routes to {}".format(len(routes), savefile))
 
-  def geocode(self, addr):
-    if self.config['verbose']:
-      print "Geocoding {}".format(addr)
+  def geocode(self, street, city, state, zipc):
+    addr = "{} {}, {} {}".format(street, city, state, zipc)
+    if self.cfg.verbose:
+      print("Geocoding {}".format(addr))
 
-    geo_result = self.client.geocode(addr)
-    return (geo_result[0]['geometry']['location']['lat'], geo_result[0]['geometry']['location']['lng'])
+    if self.smarty_client:
+      # TODO: Use SmartyStreets API
+      lookup = smartystreets_python_sdk.us_street.Lookup()
+      lookup.street = street
+      lookup.city = city
+      lookup.state = state
+      #lookup.zip = zipc
+      try:
+        self.smarty_client.send_lookup(lookup)
+      except smartystreets_python_sdk.exceptions.SmartyException as err:
+        print(err)
+        return (0,0)
+
+      if not lookup.result:
+        print("ERROR: Cannot geocode {}: invalid!".format(addr))
+        return (None,None)
+
+      return (result[0].metadata.latitude, result[0].metadata.longitude)
+    elif self.google_client:
+      # Use Google Maps
+      geo_result = self.google_client.geocode(addr)
+      return (geo_result[0]['geometry']['location']['lat'], geo_result[0]['geometry']['location']['lng'])
+    return (0,0)

@@ -8,6 +8,8 @@ import simplejson
 import csv
 import os
 
+from lib.config import Config
+
 def RGBToHTMLColor(rgb_tuple):
     """ convert an (R, G, B) tuple to #RRGGBB """
     hexcolor = '%02x%02x%02xff' % (int(rgb_tuple[0]*256), int(rgb_tuple[1]*256), int(rgb_tuple[2]*256))
@@ -36,9 +38,9 @@ def load_data(savefile):
   return orders
 
 def save_routes_to_csv(config, routes):
-  savefile = "{}/master.csv".format(config['output_dir'])
+  savefile = "{}/master.csv".format(config.output_dir)
 
-  with open(savefile, "wb+") as csvfile:
+  with open(savefile, "w") as csvfile:
     f = csv.writer(csvfile)
 
     # Write CSV Header, If you dont need that, remove this line
@@ -48,26 +50,27 @@ def save_routes_to_csv(config, routes):
       for d in route:
         f.writerow([d['id'], d['name'], d['address'], d['count'], "route-{}".format(idx+1), d['comments']])
 
-  if config['verbose']:
-    print "Saved {} routes to {}".format(len(routes), savefile)
+  if config.verbose:
+    print("Saved {} routes to {}".format(len(routes), savefile))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Generate a KML file based on the passed in routes.json file.')
   parser.add_argument('filename', type=str, help='the routes.json file containing the deliveries')
-  parser.add_argument('-c', '--config', type=file, help='the configuration filename')
   parser.add_argument('-v', '--verbose', action='store_true', help='increase the output verbosity')
   args = parser.parse_args()
 
-  config = None
-  with args.config as json_data:
-    config = simplejson.load(json_data)
-  config['verbose'] = args.verbose
+  config = Config()
+  config.verbose = args.verbose
+
+  if not os.path.isfile(args.filename):
+    print("There is no such file {}!".format(args.filename))
+    sys.exit(-1)
 
   routes = load_data(args.filename)
-  savefile = "{}/deliveries.kml".format(config['output_dir'])
+  savefile = "{}/deliveries.kml".format(config.output_dir)
 
-  if config['verbose']:
-    print "Loaded {} routes from {}".format(len(routes), args.filename)
+  if config.verbose:
+    print("Loaded {} routes from {}".format(len(routes), args.filename))
 
   colors = get_colors(100)
 
@@ -86,11 +89,11 @@ if __name__ == '__main__':
       pnt.style.iconstyle.icon.href = None
       num_orders = num_orders + 1
 
-      if config['verbose']:
-        print "Added point for {} (route-{})".format(delivery['id'], num_routes)
+      if config.verbose:
+        print("Added point for {} (route-{})".format(delivery['id'], num_routes))
 
   kml.save(savefile)
-  if config['verbose']:
-    print "Created {} points, one per order.".format(num_orders)
+  if config.verbose:
+    print("Created {} points, one per order.".format(num_orders))
 
   save_routes_to_csv(config, routes)
