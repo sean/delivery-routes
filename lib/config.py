@@ -5,7 +5,9 @@ class Config:
     self.smarty_auth_id = None
     self.smarty_auth_token = None
     self.google_api_key = None
-    self.trucks = [{ "type": "Box Truck", "capacity": 135 }, {"type": "26' Flatbed", "capacity": 315 }]
+    self.trucks = [{ "type": "Box Truck", "capacity": 145 }, 
+                   { "type": "18' Flatbed", "capacity": 225 }, 
+                   { "type": "26' Flatbed", "capacity": 316 }]
     self.contact = "(123) 456-7890 (John Smith)"
     self.output_dir = "output"
     self.processes = 8
@@ -41,12 +43,12 @@ class Config:
 
   def _setup_mappings(self):
     self.mappings = { 
-      'BD ID': 'Name',
+      'BD ID': 'BD ID',
       'NAME': 'Shipping Name',
       'ADDRESS': 'Shipping Street',
       'TOWN': 'Shipping City',
       'STATE': 'Shipping Province',
       'ZIP': 'Shipping Zip',
-      'BAGS': 'Lineitem quantity',
+      'BAGS': 'Lineitem Quantity',
       'COMMENTS': 'Notes'
     }

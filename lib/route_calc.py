@@ -61,7 +61,9 @@ class RouteCalc:
   def validate_data(self, data):
     orders = {}
     loaded_orders = self.load_orders()
+    rowNum = 1
     for address in data:
+      rowNum += 1
       if len(address[self.cfg.map_key('NAME')]) > 0 and len(address[self.cfg.map_key('ADDRESS')].strip()) > 0:
         entry = Container()
         entry.id = address[self.cfg.map_key('BD ID')]
@@ -69,7 +71,7 @@ class RouteCalc:
         entry.address = "{}, {}, {} {}".format(address[self.cfg.map_key('ADDRESS')].strip(), 
                                                address[self.cfg.map_key('TOWN')].strip(), 
                                                address[self.cfg.map_key('STATE')].strip(), 
-                                               address[self.cfg.map_key('ZIP')].strip())
+                                               address[self.cfg.map_key('ZIP')].strip().replace("'",""))
         entry.count = address[self.cfg.map_key('BAGS')]
         entry.comments = address[self.cfg.map_key('COMMENTS')]
 
@@ -85,12 +87,12 @@ class RouteCalc:
           (entry.lat, entry.lon) = self.geocode(address[self.cfg.map_key('ADDRESS')].strip(), 
                                                 address[self.cfg.map_key('TOWN')].strip(), 
                                                 address[self.cfg.map_key('STATE')].strip(), 
-                                                address[self.cfg.map_key('ZIP')].strip())
+                                                address[self.cfg.map_key('ZIP')].strip().replace("'",""))
           entry.origin_dist = great_circle((self.cfg.origin[0], self.cfg.origin[1]), (entry.lat,entry.lon)).miles
     
         orders[entry.id] = entry
       else:
-        print("ERROR: Bad entry in input: {}".format(address[self.cfg.map_key('BD ID')]))
+        print("ERROR: Bad entry in input '{}' in row {}".format(address[self.cfg.map_key('BD ID')], rowNum))
 
     self.save_orders(orders)
 
@@ -204,11 +206,11 @@ class RouteCalc:
 
   def geocode(self, street, city, state, zipc):
     addr = "{} {}, {} {}".format(street, city, state, zipc)
-    if self.cfg.verbose:
-      print("Geocoding {}".format(addr))
 
     if self.smarty_client:
-      # TODO: Use SmartyStreets API
+      if self.cfg.verbose:
+        print("Geocoding '{}' with SmartyStreets".format(addr))
+      
       lookup = smartystreets_python_sdk.us_street.Lookup()
       lookup.street = street
       lookup.city = city
@@ -224,9 +226,11 @@ class RouteCalc:
         print("ERROR: Cannot geocode {}: invalid!".format(addr))
         return (None,None)
 
-      return (result[0].metadata.latitude, result[0].metadata.longitude)
+      return (lookup.result[0].metadata.latitude, lookup.result[0].metadata.longitude)
     elif self.google_client:
-      # Use Google Maps
+      if self.cfg.verbose:
+        print("Geocoding '{}' with Google".format(addr))
+
       geo_result = self.google_client.geocode(addr)
       return (geo_result[0]['geometry']['location']['lat'], geo_result[0]['geometry']['location']['lng'])
     return (0,0)

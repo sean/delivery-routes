@@ -39,6 +39,17 @@ The following command will output one PDF file per route, based on the input ```
 $ ./printer.py output/routes.json
 ```
 
+The following command will output a KML file for use with [Google My Maps](https://www.google.com/maps/). You can load it as follows:
+1. Click on My Maps.
+2. Click Create a new map.
+3. Add a title and description.
+4. Click Import.
+5. Click Choose file, select the KML file to upload, and then click Upload from file.
+
+```shell
+$ ./gen_kml.py output/routes.json
+```
+
 ### Configuration
 
 The configuration file is a Python class with the following fields:
@@ -50,11 +61,11 @@ class Config:
     self.smarty_auth_token = environ['SMARTY_AUTH_TOKEN']
     self.google_api_key = environ['GOOGLE_API_KEY']
     self.trucks = [{ "type": "Box Truck", "capacity": 135 }, {"type": "26' Flatbed", "capacity": 315 }]
-    self.contact = environ["CONTACT"] or "(123) 456-7890 (John Smith)"
+    self.contact = environ["CONTACT"]
     self.output_dir = "output"
     self.processes = 8
     self.origin = [38.950633, -77.397684]
-    self.verbose = environ["VERBOSE"] or None
+    self.verbose = environ["VERBOSE"]
 ```
 
 The fields are explained below:
