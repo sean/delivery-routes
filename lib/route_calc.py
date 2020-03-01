@@ -66,7 +66,7 @@ class RouteCalc:
       rowNum += 1
       if len(address[self.cfg.map_key('NAME')]) > 0 and len(address[self.cfg.map_key('ADDRESS')].strip()) > 0:
         entry = Container()
-        entry.id = address[self.cfg.map_key('BD ID')]
+        entry.id = address[self.cfg.map_key('ID')]
         entry.name = address[self.cfg.map_key('NAME')]
         entry.address = "{}, {}, {} {}".format(address[self.cfg.map_key('ADDRESS')].strip(), 
                                                address[self.cfg.map_key('TOWN')].strip(), 
@@ -92,7 +92,7 @@ class RouteCalc:
     
         orders[entry.id] = entry
       else:
-        print("ERROR: Bad entry in input '{}' in row {}".format(address[self.cfg.map_key('BD ID')], rowNum))
+        print("ERROR: Bad entry in input '{}' in row {}".format(address[self.cfg.map_key('ID')], rowNum))
 
     self.save_orders(orders)
 
@@ -101,16 +101,30 @@ class RouteCalc:
   def chunk_deliveries(self, id, adjacencies, planned_deliveries):
     route = [id]
 
-    # TODO: Fix this to determine the best type of truck for the order
-    count = 135 - int(self.data[id].count)
+    # Start with the smallest truck capacity as we have more of those available
+    count = self.cfg.truck_capacity("Box Truck") - int(self.data[id].count)
 
     if count < 0:
-      print("ERROR: Order {} is {} items, which won't fit on one truck!".format(id, self.data[id].count))
+      print("ERROR: Order {} is {} items, which won't fit on a Box Truck!".format(id, self.data[id].count))
+      # We upgrade to the next size of truck
+      count = self.cfg.truck_capacity("18' Flatbed") - int(self.data[id].count)
 
+    if count < 0:
+      print("ERROR: Order {} is {} items, which won't fit on an 18' Flatbed!".format(id, self.data[id].count))
+      # TODO: Try upgrading to the maximum size truck available -- For our troop we won't always get a 26' truck, 
+      # so the next option would be to split the order (which is done manually by editing routes.json before printing)
+ 
+    # FIXME: This simple algorithm is flawed in that homes which are close via geocoords can be far via roads.
+    # An example is two homes which are back-to-back with a stream between their backyards (sometimes there's no
+    # water feature and the neighborhoods have no access between them).
     for n in adjacencies[id]:
+      # PRECOND: adjacencies is sorted nearest to fathest, thus if the distance is 3 or more away, break
       if n[1] > 3: break
+      # Skip this adjacency if it's already in another delivery route
       if n[0] in planned_deliveries: continue
+      # Skip this adjaceny if it's already in this delivery route
       if n[0] in route: continue
+      # If there's enough space left on the truck for this delivery, add it and lower the remaining space
       if (count - int(self.data[n[0]].count)) >= 0:
         route.append(n[0])
         count = count - int(self.data[n[0]].count)
@@ -232,5 +246,8 @@ class RouteCalc:
         print("Geocoding '{}' with Google".format(addr))
 
       geo_result = self.google_client.geocode(addr)
-      return (geo_result[0]['geometry']['location']['lat'], geo_result[0]['geometry']['location']['lng'])
+      if len(geo_result) < 1:
+        print("ERROR: Unable to geocode '{}' with Google".format(addr))
+      else:
+        return (geo_result[0]['geometry']['location']['lat'], geo_result[0]['geometry']['location']['lng'])
     return (0,0)

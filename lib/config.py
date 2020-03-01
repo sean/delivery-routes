@@ -23,6 +23,12 @@ class Config:
       return self.mappings[key]
     return key
 
+  def truck_capacity(self, type):
+    for truck in self.trucks:
+      if truck["type"] == type:
+        return truck["capacity"]
+    return -1
+
   def _load_env_vars(self):
     try:
       self.smarty_auth_id = os.environ['SMARTY_AUTH_ID']
@@ -43,12 +49,12 @@ class Config:
 
   def _setup_mappings(self):
     self.mappings = { 
-      'BD ID': 'BD ID',
+      'ID': 'ID',
       'NAME': 'Shipping Name',
       'ADDRESS': 'Shipping Street',
       'TOWN': 'Shipping City',
       'STATE': 'Shipping Province',
       'ZIP': 'Shipping Zip',
-      'BAGS': 'Lineitem Quantity',
+      'BAGS': 'Lineitem quantity',
       'COMMENTS': 'Notes'
     }
