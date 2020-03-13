@@ -16,7 +16,7 @@ class ContainerEncoder(json.JSONEncoder):
     return obj.__dict__
 
 class RouteCalc:
-  def __init__(self, config, data):
+  def __init__(self, config):
     self.cfg = config
     if self.cfg.google_api_key:
       self.google_client = googlemaps.Client(self.cfg.google_api_key)
@@ -27,10 +27,19 @@ class RouteCalc:
       self.smarty_client = smartystreets_python_sdk.ClientBuilder(credentials).build_us_street_api_client()
     else:
       self.smarty_client = None
-    # This must appear last as it uses both config and client
-    self.data   = self.validate_data(data)
+    self.data = None
+
+  def load_csv(self, csv_data):
+    self.data = self.validate_data(csv_data)
+
+  def load_json(self, filename):
+    self.data = self.load_orders(filename)
 
   def route(self):
+    if self.data == None:
+      print("ERROR: load_csv or load_json not called first!")
+      return -1
+
     # calculate the adjacencies (between each delivery address) if needed
     adjacencies = self.load_adjacencies()
     if len(adjacencies) != len(self.data):
@@ -55,12 +64,13 @@ class RouteCalc:
       planned_deliveries.extend(route)
 
     self.save_routes(self.expand_routes(delivery_routes))
+    return 0
 
   # private methods
 
   def validate_data(self, data):
     orders = {}
-    loaded_orders = self.load_orders()
+    loaded_orders = self.load_orders("{}/orders.json".format(self.cfg.output_dir))
     rowNum = 1
     for address in data:
       rowNum += 1
@@ -184,9 +194,8 @@ class RouteCalc:
     if self.cfg.verbose:
       print("Saved {} adjacencies to {}".format(len(data), savefile))
 
-  def load_orders(self):
+  def load_orders(self, savefile):
     orders = {}
-    savefile = "{}/orders.json".format(self.cfg.output_dir)
 
     if os.path.isfile(savefile): 
       with open(savefile, 'r') as json_data:
@@ -216,7 +225,14 @@ class RouteCalc:
       json.dump(routes, f, indent=2, cls=ContainerEncoder)
 
     if self.cfg.verbose:
-      print("Saved {} routes to {}".format(len(routes), savefile))
+      print("Saved {} routes with {} orders to {}".format(len(routes), self.count_orders_in_routes(routes), savefile))
+
+  def count_orders_in_routes(self, routes):
+    orders = 0
+    for r in routes:
+      orders += len(r)
+
+    return orders
 
   def geocode(self, street, city, state, zipc):
     addr = "{} {}, {} {}".format(street, city, state, zipc)

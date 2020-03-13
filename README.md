@@ -39,7 +39,21 @@ The following command will output one PDF file per route, based on the input ```
 $ ./printer.py output/routes.json
 ```
 
-The following command will output a KML file for use with [Google My Maps](https://www.google.com/maps/). You can load it as follows:
+NOTE: If you simply need to regenerate the PDF for a single route, you can specify the route number on the command-line like so:
+
+```shell
+$ ./printer.py output/routes.json 17
+```
+
+The following command allows you to regenerate the routes (```routes.json```), based on the input ```routes.csv``` file:
+
+```shell
+$ ./regen.py  -v -o output/orders.json output/routes.csv
+```
+
+This is useful when you want to hand-optimize the routes (you only need to make edits in the ```routes.csv``` file rather than mucking with the JSON file).
+
+The following command will output a KML file for use with [Google My Maps](https://www.google.com/maps/d/). You can load it as follows:
 1. Click on My Maps.
 2. Click Create a new map.
 3. Add a title and description.

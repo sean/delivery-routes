@@ -21,11 +21,13 @@ if __name__ == '__main__':
     print("There is no such file {}!".format(args.filename))
     sys.exit(-1)
 
-  with open(args.filename, "r") as data_file:
+  with open(args.filename, mode="r", encoding="utf-8-sig") as data_file:
     for row in csv.DictReader(data_file):
       d.append(row)
 
   c = Config()
   c.verbose = args.verbose
-  r = RouteCalc(c, d)
-  r.route()
+  r = RouteCalc(c)
+  r.load_csv(d)
+  rval = r.route()
+  sys.exit(rval)

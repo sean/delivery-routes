@@ -5,9 +5,9 @@ class Config:
     self.smarty_auth_id = None
     self.smarty_auth_token = None
     self.google_api_key = None
-    self.trucks = [{ "type": "Box Truck", "capacity": 145 }, 
-                   { "type": "18' Flatbed", "capacity": 225 }, 
-                   { "type": "26' Flatbed", "capacity": 316 }]
+    self.trucks = [{ "type": "Box Truck", "capacity": 138 },   # 3 skids / 135 bags
+                   { "type": "18' Flatbed", "capacity": 225 }, # 5 skids / 225 bags
+                   { "type": "26' Flatbed", "capacity": 315 }] # 7 skids / 315 bags
     self.contact = "(123) 456-7890 (John Smith)"
     self.output_dir = "output"
     self.processes = 8
