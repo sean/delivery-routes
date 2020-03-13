@@ -3,6 +3,7 @@
 from multiprocessing import Pool
 
 import argparse
+import datetime
 import urllib
 import json
 import time
@@ -114,6 +115,7 @@ def truck_type(config, count):
 
 def gen_html(config, title, bags, r, img):
   truck = truck_type(config, bags)
+  now = datetime.datetime.now()
   html = """
   <h1 align="center">%s (%s bags) %s</h1>
   <center>
@@ -133,7 +135,8 @@ def gen_html(config, title, bags, r, img):
     <li><b>Highlight each delivery after you've verified that the correct number of bags have been stacked.</b></li>
   </ul>
   <br /><hr />
-  <center><b>For Support Call: %s</b></center>""" % (config.contact)
+  <center><b>For Support Call: %s</b></center><br />
+  <center><small>%s</small></center>""" % (config.contact, now.strftime("%Y-%b-%d"))
   return html
 
 def url_for_route(route):
