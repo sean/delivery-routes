@@ -49,7 +49,7 @@ class Config:
 
   def _setup_mappings(self):
     self.mappings = { 
-      'ID': 'ID',
+      'ID': 'Name',
       'NAME': 'Shipping Name',
       'ADDRESS': 'Shipping Street',
       'TOWN': 'Shipping City',
