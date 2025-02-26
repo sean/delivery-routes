@@ -14,6 +14,9 @@ import os
 from lib.config import Config
 from lib.mypdf import MyFPDF
 
+from selenium import webdriver
+from time import sleep
+
 def print_routes(config, routes):
   # Process the routes to generate PDFs for the drivers
   bags       = 0
@@ -87,8 +90,16 @@ def generate_pdf(arg):
   url  = url_for_route(r)
   bags = total_bags(r)
   deliveries = total_deliveries(r)
-  os.system("webkit2png -D %s -o p%s -F -W 1440 -H 900 \"%s\" 1>&2 >/dev/null" % (config.output_dir, title, url))
+
   filename = "%s/p%s-full.png" % (config.output_dir, title)
+  # webkit2png doesn't work with Python3
+  #os.system("webkit2png -D %s -o p%s -F -W 1440 -H 900 \"%s\" 1>&2 >/dev/null" % (config.output_dir, title, url))
+  driver = webdriver.Firefox()
+  driver.get(url)
+  time.sleep(10)
+  driver.save_screenshot(filename)
+  driver.quit()
+
   pdf = MyFPDF()
   pdf.set_margins(1.0, 0.5)
   pdf.add_page()

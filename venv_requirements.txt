@@ -1,8 +1,9 @@
-webkit2png
-fpdf
+fpdf2
 geopy
 googlemaps
 simplekml
 simplejson
 numpy
 smartystreets_python_sdk
+selenium
+webdriver-manager
